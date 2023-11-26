@@ -3,13 +3,15 @@ package router
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"telegram-notice/hash"
+	uhash "telegram-notice/hash"
 	"telegram-notice/tgbot"
 )
 
-func SetupRoutes(r *gin.Engine, hashMap *uhash.Hashtable, t tgbot.TgBot) {
-	r.POST("/webhook/:id", PostWebHook(hashMap, t))
-	r.GET("/webhook/:id", GetWebHook(hashMap, t))
+func SetupRoutes(hashMap *uhash.Hashtable, t *tgbot.TgBot) *gin.Engine {
+	r := gin.Default()
+	r.POST("/webhook/:id", PostWebHook(hashMap, *t))
+	r.GET("/webhook/:id", GetWebHook(hashMap, *t))
+	return r
 }
 func PostWebHook(hashMap *uhash.Hashtable, t tgbot.TgBot) gin.HandlerFunc {
 	return func(c *gin.Context) {
