@@ -12,6 +12,10 @@ var HashMap *uhash.Hashtable
 
 func main() {
 	HashMap = uhash.Newhash()
+	err := HashMap.LoadFromFile("hash.json")
+	if err != nil {
+		return
+	}
 	bot := tgbot.NewBot(os.Getenv("TELEGRAM_APITOKEN"), HashMap)
 
 	//使用gin创建一个路由 用于接收telegram的webhook
@@ -19,7 +23,7 @@ func main() {
 
 	router.SetupRoutes(webhook, HashMap, *bot)
 
-	err := webhook.Run(":8080")
+	err = webhook.Run(":8080")
 	if err != nil {
 		return
 	}

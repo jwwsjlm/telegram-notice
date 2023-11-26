@@ -63,7 +63,11 @@ func GetWebHook(hashMap *uhash.Hashtable, t tgbot.TgBot) gin.HandlerFunc {
 		fmt.Println("用户", idInt)
 		//msg := c.PostForm("message")
 		fmt.Println("消息内容", rawData)
-
+		err := hashMap.SaveToFile("hash.json")
+		if err != nil {
+			t.SendMeesg(idInt, "数据库报错失败")
+			return
+		}
 		t.SendMeesg(idInt, data)
 
 		c.JSON(200, gin.H{
