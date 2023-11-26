@@ -1,6 +1,6 @@
 telegram-notice
 通过gin搭建一个webhook.
-使用方法.下载源码替换tgbottoken为你自己的bot
+使用方法.下载源码替换example.config.ini为你自己的botTken并且文件重命名为config.ini
 然后运行软件.给bot发送/getwebhook
 bot会返回当前用户对应的id 进行md5加密之后输出
 用法:
