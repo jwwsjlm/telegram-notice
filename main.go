@@ -1,8 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
-	"os"
+	"github.com/go-ini/ini"
 	"telegram-notice/hash"
 	"telegram-notice/router"
 	"telegram-notice/tgbot"
@@ -10,13 +11,24 @@ import (
 
 var HashMap *uhash.Hashtable
 
+type Config struct {
+	TELEGRAM_APITOKEN string
+}
+
 func main() {
-	HashMap = uhash.Newhash()
-	err := HashMap.LoadFromFile("hash.json")
+	cfg, err := ini.Load("config.ini")
 	if err != nil {
 		return
 	}
-	bot := tgbot.NewBot(os.Getenv("TELEGRAM_APITOKEN"), HashMap)
+	TELEGRAM_APITOKEN := cfg.Section("telegram").Key("TELEGRAM_APITOKEN").String()
+	fmt.Println("Telegram API Token:", TELEGRAM_APITOKEN)
+
+	HashMap = uhash.Newhash()
+	err = HashMap.LoadFromFile("./hash.json")
+	if err != nil {
+		return
+	}
+	bot := tgbot.NewBot(TELEGRAM_APITOKEN, HashMap)
 
 	//使用gin创建一个路由 用于接收telegram的webhook
 	webhook := gin.Default()

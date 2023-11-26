@@ -37,6 +37,7 @@ func FormatMessage(t TgBot, h uhash.Hashtable) {
 			msg.Text = md5id
 			//update.Message.Chat.ID转换为string类型
 			h.Set(update.Message.Chat.ID)
+			h.SaveToFile("./hash.json")
 
 		default:
 			msg.Text = "I don't know that command"

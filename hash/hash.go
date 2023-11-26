@@ -1,6 +1,7 @@
 package uhash
 
 import (
+	"fmt"
 	"github.com/goccy/go-json"
 	"os"
 
@@ -11,21 +12,21 @@ type Hashtable struct {
 	hashMap map[string]int64
 }
 
-func (h Hashtable) Get(string2 string) (int64, bool) {
+func (h *Hashtable) Get(string2 string) (int64, bool) {
 	if _, ok := h.hashMap[string2]; !ok {
 		return 0, false
 	}
 	return h.hashMap[string2], true
 }
-func (h Hashtable) Set(int642 int64) {
+func (h *Hashtable) Set(int642 int64) {
 	h.hashMap[utils.IntToMd5(int642)] = int642
 }
-func (h Hashtable) SaveToFile(filename string) error {
+func (h *Hashtable) SaveToFile(filename string) error {
 	jsonData, err := json.Marshal(h.hashMap)
 	if err != nil {
 		return err
 	}
-
+	fmt.Println("jsonData", jsonData)
 	// 将 JSON 数据写入文件
 	err = os.WriteFile(filename, jsonData, 0644)
 	if err != nil {
@@ -35,18 +36,29 @@ func (h Hashtable) SaveToFile(filename string) error {
 	return nil
 
 }
-func (h Hashtable) LoadFromFile(filename string) error {
+func (h *Hashtable) LoadFromFile(filename string) error {
+	fileInfo, err := os.Stat(filename)
+
+	if os.IsNotExist(err) {
+		// 文件不存在，不进行读取操作
+		return nil
+	}
+	if fileInfo.Size() == 0 {
+		// 文件内容为空，不进行读取操作
+		return nil
+	}
 	jsonData, err := os.ReadFile(filename)
 	if err != nil {
 		return err
 	}
-
+	fmt.Println(filename, jsonData)
 	// 将 JSON 数据解析为哈希表
 	var data map[string]int64
 	err = json.Unmarshal(jsonData, &data)
 	if err != nil {
 		return err
 	}
+
 	h.hashMap = data
 	return nil
 }
