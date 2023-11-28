@@ -14,7 +14,7 @@ type TgBot struct {
 	u   tgbotapi.UpdateConfig
 }
 
-func FormatMessage(t TgBot, h uhash.Hashtable) {
+func FormatMessage(t TgBot, h *uhash.Hashtable) {
 
 	updates := t.Bot.GetUpdatesChan(t.u)
 	for update := range updates {
@@ -37,10 +37,13 @@ func FormatMessage(t TgBot, h uhash.Hashtable) {
 			msg.Text = md5id
 			//update.Message.Chat.ID转换为string类型
 			h.Set(update.Message.Chat.ID)
-			h.SaveToFile("./hash.json")
+			err := h.SaveToFile("./hash.json")
+			if err != nil {
+				return
+			}
 
 		default:
-			msg.Text = "I don't know that command"
+			msg.Text = "输入/gerhook获得您的用户ID"
 		}
 
 		if _, err := t.Bot.Send(msg); err != nil {
@@ -49,7 +52,7 @@ func FormatMessage(t TgBot, h uhash.Hashtable) {
 	}
 }
 
-func (t TgBot) SendMeesg(id int64, string2 string) error {
+func (t TgBot) SendMees(id int64, string2 string) error {
 	msg := tgbotapi.NewMessage(id, string2)
 	msg.Text = string2
 	_, err := t.Bot.Send(msg)
@@ -70,6 +73,6 @@ func NewBot(t string, hash *uhash.Hashtable) *TgBot {
 		Bot: bot,
 		u:   u,
 	}
-	go FormatMessage(tgBot, *hash)
+	go FormatMessage(tgBot, hash)
 	return &tgBot
 }

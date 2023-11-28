@@ -1,6 +1,7 @@
 package uhash
 
 import (
+	"errors"
 	"github.com/goccy/go-json"
 	"os"
 	"sync"
@@ -12,16 +13,16 @@ type Hashtable struct {
 	hashMap sync.Map
 }
 
-func (h *Hashtable) Get(string2 string) (int64, bool) {
+func (h *Hashtable) Get(string2 string) (int64, error) {
 	val, ok := h.hashMap.Load(string2)
 	if !ok {
-		return 0, false
+		return 0, errors.New("未找到当前用户id")
 	}
 	result, ok := val.(int64)
 	if !ok {
-		return 0, false
+		return 0, errors.New("转换失败联系管理员")
 	} else {
-		return result, true
+		return result, nil
 	}
 
 }
