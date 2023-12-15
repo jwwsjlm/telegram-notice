@@ -24,3 +24,37 @@ curl --location --request POST "http://127.0.0.1:8080/webhook/<bot返回的MD5>"
 --header "User-Agent: Apifox/1.0.0 (https://apifox.com)" \
 --data-raw "你真好呀"
 通过以上步骤，你可以实现一个 bot 对应多个用户，进行消息分发和消息通知的功能。
+# 现成的bot!!
+
+如果不想自己安装配置.这里给了一个作者自己搭建的**_[bot](https://t.me/fengtian_bot)_**
+发送私聊`/gethook`会返回给你一段md5
+然后替换此URL`https://notify.xsojson.com/webhook/<MD5>?text=hello word`
+get请求的话直接?txt=你要发送的内容即可
+
+### POST请求案例
+`curl --location --request POST 'https://notify.xsojson.com/webhook/<MD5>' \
+--header 'User-Agent: Apifox/1.0.0 (https://apifox.com)' \
+--header 'Content-Type: application/json' \
+--header 'Accept: */*' \
+--header 'Host: notify.xsojson.com' \
+--header 'Connection: keep-alive' \
+--data-raw '你真是个大好人呢'
+`
+bot会直接把data-raw的内容发送给目标用户.
+
+# docker部署
+## 这里以群晖为例子.
+### 正常安装docker
+注册表搜索`guanren/telegram`
+![步骤1](./image/步骤1.png)
+双击下载.映像当中找到此文件双击加载到容器当中
+![步骤2](./image/步骤2.png)
+### 设置储存空间和端口设置.如图设置即可
+![步骤3](./image/步骤3.png)
+![步骤4](./image/步骤4.png)
+在`telegram-notify/config`下新建`config.ini`和`hash.json`
+![步骤5](./image/步骤5.png)
+
+### config.ini如图配置好自己的***[bot key](https://www.teleme.io/articles/create_your_own_telegram_bot?hl=zh-hans)***
+![文件格式](./image/文件格式.png)
+**然后正常运行即可**

@@ -1,13 +1,16 @@
-FROM golang:alpine AS builder
-WORKDIR /build
-# Copy our go codes to workdir
-COPY . .
+FROM golang:1-alpine as builder
 
-ENV CGO_ENABLED=0
-RUN go mod vendor \
-    && go build -o myapp .
+RUN mkdir /app
 
-# Build from scratch
-FROM scratch
-COPY --from=builder /build/myapp /
-ENTRYPOINT ["/myapp"]
+ADD . /app/
+WORKDIR /app
+
+RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags '-s -w -buildid=' -o main .
+
+FROM alpine:latest
+
+WORKDIR /app
+RUN mkdir -p /app/config
+COPY --from=builder /app/main .
+
+CMD ["/app/main"]
