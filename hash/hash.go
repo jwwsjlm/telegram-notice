@@ -27,6 +27,7 @@ func (h *Hashtable) Get(string2 string) (int64, error) {
 
 }
 func (h *Hashtable) Set(int642 int64) {
+
 	h.hashMap.Store(utils.IntToMd5(int642), int642)
 
 }

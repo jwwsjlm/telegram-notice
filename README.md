@@ -58,3 +58,4 @@ bot会直接把data-raw的内容发送给目标用户.
 ### config.ini如图配置好自己的***[bot key](https://www.teleme.io/articles/create_your_own_telegram_bot?hl=zh-hans)***
 ![文件格式](./image/文件格式.png)
 **然后正常运行即可**
+参考此项目https://github.com/WingLim/ddns-telegram-bot

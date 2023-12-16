@@ -9,6 +9,7 @@ import (
 
 func SetupRoutes(hashMap *uhash.Hashtable, t *tgbot.TgBot) *gin.Engine {
 	r := gin.Default()
+
 	r.POST("/webhook/:id", PostWebHook(hashMap, *t))
 	r.GET("/webhook/:id", GetWebHook(hashMap, *t))
 	return r
