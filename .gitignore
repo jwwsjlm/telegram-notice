@@ -1,0 +1,6 @@
+/.idea
+/config/hash.json
+/config/config.ini
+main.exe
+go_build_*.exe
+/hash.json
