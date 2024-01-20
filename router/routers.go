@@ -3,18 +3,19 @@ package router
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"gopkg.in/telebot.v3"
+	Tbot "telegram-notice/Newtele"
 	uhash "telegram-notice/hash"
-	"telegram-notice/tgbot"
 )
 
-func SetupRoutes(hashMap *uhash.Hashtable, t *tgbot.TgBot) *gin.Engine {
+func SetupRoutes(hashMap *uhash.Hashtable, t *Tbot.Telegramini) *gin.Engine {
 	r := gin.Default()
 
-	r.POST("/webhook/:id", PostWebHook(hashMap, *t))
-	r.GET("/webhook/:id", GetWebHook(hashMap, *t))
+	r.POST("/webhook/:id", PostWebHook(hashMap, t))
+	r.GET("/webhook/:id", GetWebHook(hashMap, t))
 	return r
 }
-func PostWebHook(hashMap *uhash.Hashtable, t tgbot.TgBot) gin.HandlerFunc {
+func PostWebHook(hashMap *uhash.Hashtable, t *Tbot.Telegramini) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		//通过id判断hashMap中是否存在该用户
@@ -36,8 +37,11 @@ func PostWebHook(hashMap *uhash.Hashtable, t tgbot.TgBot) gin.HandlerFunc {
 		fmt.Println("用户", idInt)
 		msg := c.PostForm("message")
 		fmt.Println("消息内容", msg)
+		user := &telebot.User{
+			ID: idInt,
+		}
+		_, err = t.Bot.Send(user, data)
 
-		err = t.SendMees(idInt, data)
 		if err != nil {
 			c.JSON(200, gin.H{
 				"message": err.Error(),
@@ -52,7 +56,7 @@ func PostWebHook(hashMap *uhash.Hashtable, t tgbot.TgBot) gin.HandlerFunc {
 	}
 }
 
-func GetWebHook(hashMap *uhash.Hashtable, t tgbot.TgBot) gin.HandlerFunc {
+func GetWebHook(hashMap *uhash.Hashtable, t *Tbot.Telegramini) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		fmt.Println("id", id)
@@ -74,8 +78,11 @@ func GetWebHook(hashMap *uhash.Hashtable, t tgbot.TgBot) gin.HandlerFunc {
 		fmt.Println("用户", idInt)
 		//msg := c.PostForm("message")
 		fmt.Println("消息内容", rawData)
+		user := &telebot.User{
+			ID: idInt,
+		}
+		_, err = t.Bot.Send(user, data)
 
-		err = t.SendMees(idInt, data)
 		if err != nil {
 			c.JSON(404, gin.H{
 				"message": err.Error(),

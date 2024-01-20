@@ -1,6 +1,56 @@
+# 编译产生的文件
+*.o
+*.a
+*.so
+
+# 日志文件
+*.log
+
+# 自动生成的文件
+*.[568vq]
+*.cgo1.go
+*.cgo2.c
+_cgo_defun.c
+_cgo_gotypes.go
+_cgo_export.*
+
+# 测试相关
+_testmain.go
+*.test
+*.test.log
+
+# 系統文件 
+*.pid 
+*.swp 
+*~
+.DS_Store
+thumbs.db
+
+# IDE/editor 文件
+.idea/
+*.iml
+.vscode/
+
+# 库文件
+/vendor/
+
+# 二进制文件
+/main
+*.exe
+go_build_*.exe
+
+# 备份文件
+*.bak
+*.bak.*
+
+# 其他临时文件
+*.tmp
+*.temp
+*.sw?
+
+# 用户指定
 /.idea
 /config/hash.json
 /config/config.ini
 main.exe
-go_build_*.exe
 /hash.json

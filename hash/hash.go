@@ -100,5 +100,6 @@ func (h *Hashtable) LoadFromFile(filename string) error {
 	return nil
 }
 func NewHash() *Hashtable {
+
 	return &Hashtable{hashMap: &sync.Map{}}
 }

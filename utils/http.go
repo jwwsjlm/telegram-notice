@@ -28,8 +28,9 @@ func Upimage(u string, data []byte) (string, error) {
 
 		return "", err
 	}
-
-	return "https://" + u + imgt[0].Src, nil
+	ret := "https://" + u + imgt[0].Src
+	log.Println("来新图啦:", ret)
+	return ret, nil
 }
 func GetImage(u string) ([]byte, error) {
 	resp, err := client.R().Get(u)
