@@ -3,7 +3,7 @@ package router
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"gopkg.in/telebot.v3"
+	tele "gopkg.in/telebot.v3"
 	Tbot "telegram-notice/Newtele"
 	uhash "telegram-notice/hash"
 )
@@ -35,12 +35,16 @@ func PostWebHook(hashMap *uhash.Hashtable, t *Tbot.Telegramini) gin.HandlerFunc 
 		data := string(rawData)
 		//输出hashMap中的用户
 		fmt.Println("用户", idInt)
-		msg := c.PostForm("message")
-		fmt.Println("消息内容", msg)
-		user := &telebot.User{
+		fmt.Println("消息内容", data)
+
+		user := &tele.User{
 			ID: idInt,
 		}
-		_, err = t.Bot.Send(user, data)
+
+		_, err = t.Bot.Send(user, data, &tele.SendOptions{
+			DisableWebPagePreview: true,
+			ParseMode:             tele.ModeMarkdown,
+		})
 
 		if err != nil {
 			c.JSON(200, gin.H{
@@ -78,10 +82,13 @@ func GetWebHook(hashMap *uhash.Hashtable, t *Tbot.Telegramini) gin.HandlerFunc {
 		fmt.Println("用户", idInt)
 		//msg := c.PostForm("message")
 		fmt.Println("消息内容", rawData)
-		user := &telebot.User{
+		user := &tele.User{
 			ID: idInt,
 		}
-		_, err = t.Bot.Send(user, data)
+		_, err = t.Bot.Send(user, data, &tele.SendOptions{
+			DisableWebPagePreview: true,
+			ParseMode:             tele.ModeMarkdown,
+		})
 
 		if err != nil {
 			c.JSON(404, gin.H{
