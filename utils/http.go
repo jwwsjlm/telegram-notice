@@ -19,7 +19,7 @@ func Upimage(u string, data []byte) (string, error) {
 		SetFileBytes("file", "test.jpeg", data).
 		SetHeaders(map[string]string{
 			"authority": u,
-			"referer":   "https://" + "+url.Host+" + "/",
+			"referer":   "https://" + u + "/",
 			"accept":    "application/json, text/plain, */*",
 		}).
 		SetSuccessResult(&imgt).
