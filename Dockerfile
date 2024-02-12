@@ -15,7 +15,6 @@ RUN go mod download  \
 
 # 创建一个小型的最终镜像
 FROM alpine:3.19
-
 # 设置工作目录
 WORKDIR /app
 # 从构建镜像中复制编译好的应用程序
@@ -33,7 +32,6 @@ RUN apk update --no-cache \
     && mkdir -p /app/config \
     && cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
     && echo "Asia/Shanghai" > /etc/timezone
-
 
 # 设置时区环境变量
 ENV TZ=Asia/Shanghai

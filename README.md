@@ -33,6 +33,7 @@ curl --location --request POST 'https://127.0.0.1:2095/webhook/<MD5>' \
 通过以上步骤，你可以实现一个 bot 对应多个用户，进行消息分发和消息通知的功能。
 
 <a id="Bot"></a>
+
 ## 已经搭建好的 bot 
 
 如果不想自己安装配置.这里给了一个作者自己搭建的**_[bot](https://t.me/fengtian_bot)_**
@@ -40,11 +41,11 @@ curl --location --request POST 'https://127.0.0.1:2095/webhook/<MD5>' \
 然后替换此 URL`https://notify.xsojson.com/webhook/<MD5>?text=hello word`
 get 请求的话直接?txt=你要发送的内容即可 支持 markdown 语法 前后加上``即可`
 
-![](./image/markdowrn.png)
+![ddns_go](./image/markdowrn.png)
 
 ### POST 请求案例
 
-```
+```cmd
 curl --location --request POST 'https://127.0.0.1:2095/webhook/<MD5>' \
 --header 'User-Agent: Apifox/1.0.0 (https://apifox.com)' \
 --header 'Content-Type: application/json' \
