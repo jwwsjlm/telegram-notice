@@ -4,6 +4,7 @@ import (
 	"github.com/imroc/req/v3"
 	"io"
 	"log"
+	url2 "net/url"
 	types "telegram-notice/struct"
 )
 
@@ -14,7 +15,19 @@ func init() {
 }
 func Upimage(u string, data []byte) (string, error) {
 	var imgt []types.Image
-
+	var url = url2.URL{
+		Scheme:      "",
+		Opaque:      "",
+		User:        nil,
+		Host:        "",
+		Path:        "",
+		RawPath:     "",
+		OmitHost:    false,
+		ForceQuery:  false,
+		RawQuery:    "",
+		Fragment:    "",
+		RawFragment: "",
+	}
 	_, err := client.R().
 		SetFileBytes("file", "test.jpeg", data).
 		SetHeaders(map[string]string{
