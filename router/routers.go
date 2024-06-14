@@ -4,16 +4,33 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	tele "gopkg.in/telebot.v3"
+	"log"
 	Tbot "telegram-notice/Newtele"
 	uhash "telegram-notice/hash"
 )
 
 func SetupRoutes(hashMap *uhash.Hashtable, t *Tbot.Telegramini) *gin.Engine {
-	r := gin.Default()
-
+	//gin.New()
+	r := gin.New()
+	r.Use(gin.LoggerWithFormatter(LoggerWithFormatter))
+	gin.DebugPrintRouteFunc = func(httpMethod, absolutePath, handlerName string, nuHandlers int) {
+		log.Printf("gin日志 %v %v %v %v\n", httpMethod, absolutePath, handlerName, nuHandlers)
+	}
+	//gin.SetMode(gin.ReleaseMode)
 	r.POST("/webhook/:id", PostWebHook(hashMap, t))
 	r.GET("/webhook/:id", GetWebHook(hashMap, t))
 	return r
+}
+func LoggerWithFormatter(params gin.LogFormatterParams) string {
+	return fmt.Sprintf(
+		" %s  | %d | \t %s | %s | %s \t  %s\n",
+		params.TimeStamp.Format("2006/01/02 - 15:04:05"),
+		params.StatusCode, // 状态码
+		params.ClientIP,   // 客户端ip
+		params.Latency,    // 请求耗时
+		params.Method,     // 请求方法
+		params.Path,       // 路径
+	)
 }
 func PostWebHook(hashMap *uhash.Hashtable, t *Tbot.Telegramini) gin.HandlerFunc {
 	return func(c *gin.Context) {

@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	gin.SetMode(gin.ReleaseMode)
+	gin.SetMode(gin.TestMode)
 	cfg, err := ini.Load("config/config.ini")
 	if err != nil {
 		panic(err)
