@@ -7,6 +7,7 @@ import (
 	"gopkg.in/telebot.v3/middleware"
 	"io"
 	"log"
+	"telegram-notice/global"
 	uhash "telegram-notice/hash"
 	"telegram-notice/utils"
 	"time"
@@ -18,7 +19,6 @@ type Telegramini struct {
 	Notifyurl  string
 	Hash       *uhash.Hashtable
 	Bot        *tele.Bot
-	Log        *log.Logger
 }
 
 func (tm *Telegramini) commandGethook(tc tele.Context) error {
@@ -34,16 +34,16 @@ func (tm *Telegramini) commandGethook(tc tele.Context) error {
 	}
 	err := tc.Send(txt, options)
 	if err != nil {
-		errs := fmt.Errorf("消息发送失败: %w", err)
-		tm.Log.Println(errs)
-		return errs
+
+		global.LogZap.Errorf("消息发送失败: %w", err)
+		return err
 
 	}
 	tm.Hash.Set(tc.Message().Chat.ID, md5id)
 	err = tm.Hash.SaveToFile("config/hash.json")
 	if err != nil {
 		errs := fmt.Errorf("hash保存失败: %w", err)
-		tm.Log.Println(errs)
+		global.LogZap.Error(errs)
 		return errs
 	}
 	return nil
@@ -58,32 +58,32 @@ func (tm *Telegramini) procPhoto(tc tele.Context) error {
 	defer func(reader io.ReadCloser) {
 		err := reader.Close()
 		if err != nil {
-			tm.Log.Printf("Error when closing the body: %v", err)
+			global.LogZap.Error("Error when closing the body: %v", err)
 		}
 	}(reader)
 	if err != nil {
-		tm.Log.Println("Failed to download:", err)
+		global.LogZap.Error("Failed to download:", err)
 		return err
 	}
 
 	data, err := io.ReadAll(reader)
 
 	if err != nil {
-		tm.Log.Println("发送信息失败:", err)
+		global.LogZap.Error("发送信息失败:", err)
 		return err
 	}
 	upimage, err := utils.Upimage(tm.TgimageUrl, data)
 	if err != nil {
-		tm.Log.Println("上传图片失败:", err)
+		global.LogZap.Error("上传图片失败:", err)
 		_ = tc.Send("上传图片失败:" + err.Error())
 		return err
 	}
 	err = tc.Send("您的图片已经上传到图床\n" + upimage)
 	if err != nil {
-		tm.Log.Println("发送信息失败:", err)
+		global.LogZap.Error("发送信息失败:", err)
 		return err
 	}
-	tm.Log.Println("来新图啦:", upimage)
+	global.LogZap.Infoln("来新图啦:", upimage)
 
 	// 响应信息给用户
 	return nil
@@ -100,29 +100,29 @@ func (tm *Telegramini) procVideo(tc tele.Context) error {
 
 	if err != nil {
 		err := tc.Send("下载图片失败:" + err.Error())
-		tm.Log.Println("Failed to download:", err)
+		global.LogZap.Error("Failed to download:", err)
 		return err
 	}
 	defer func(reader io.ReadCloser) {
 		err := reader.Close()
 		if err != nil {
-			tm.Log.Println("Error when closing the body: %v", err)
+			global.LogZap.Error("Error when closing the body: %v", err)
 		}
 	}(reader)
 	data, err := io.ReadAll(reader)
 
 	upimage, err := utils.Upimage(tm.TgimageUrl, data)
 	if err != nil {
-		tm.Log.Println("上传图片失败:", err)
+		global.LogZap.Error("上传图片失败:", err)
 		_ = tc.Send("上传图片失败:" + err.Error())
 		return err
 	}
 	err = tc.Send("您的图片已经上传到图床\n" + upimage)
 	if err != nil {
-		tm.Log.Println("发送信息失败:", err)
+		global.LogZap.Error("发送信息失败:", err)
 		return err
 	}
-	tm.Log.Println("来新图啦:", upimage)
+	global.LogZap.Error("来新图啦:", upimage)
 
 	// 响应信息给用户
 	return nil
@@ -138,29 +138,29 @@ func (tm *Telegramini) procAnimation(tc tele.Context) error {
 	reader, err := tm.Bot.File(&tc.Message().Animation.File)
 
 	if err != nil {
-		tm.Log.Println("Failed to download:", err)
+		global.LogZap.Error("Failed to download:", err)
 		return err
 	}
 	defer func(reader io.ReadCloser) {
 		err := reader.Close()
 		if err != nil {
-			tm.Log.Println("Error when closing the body: %v", err)
+			global.LogZap.Error("Error when closing the body: %v", err)
 		}
 	}(reader)
 	data, err := io.ReadAll(reader)
 
 	upimage, err := utils.Upimage(tm.TgimageUrl, data)
 	if err != nil {
-		tm.Log.Println("上传图片失败:", err)
+		global.LogZap.Error("上传图片失败:", err)
 		_ = tc.Send("上传图片失败:" + err.Error())
 		return err
 	}
 	err = tc.Send("您的图片已经上传到图床\n" + upimage)
 	if err != nil {
-		tm.Log.Println("发送信息失败:", err)
+		global.LogZap.Error("发送信息失败:", err)
 		return err
 	}
-	tm.Log.Println("来新图啦:", upimage)
+	global.LogZap.Infoln("来新图啦:", upimage)
 
 	// 响应信息给用户
 	return nil
@@ -180,29 +180,29 @@ func (tm *Telegramini) procDocument(tc tele.Context) error {
 	reader, err := tm.Bot.File(&tc.Message().Document.File)
 
 	if err != nil {
-		tm.Log.Println("Failed to download:", err)
+		global.LogZap.Errorln("Failed to download:", err)
 		return err
 	}
 	defer func(reader io.ReadCloser) {
 		err := reader.Close()
 		if err != nil {
-			tm.Log.Println("Error when closing the body: %v", err)
+			global.LogZap.Errorln("Error when closing the body: %v", err)
 		}
 	}(reader)
 	data, err := io.ReadAll(reader)
 
 	upimage, err := utils.Upimage(tm.TgimageUrl, data)
 	if err != nil {
-		tm.Log.Println("上传图片失败:", err)
+		global.LogZap.Errorln("上传图片失败:", err)
 		_ = tc.Send("上传图片失败:" + err.Error())
 		return err
 	}
 	err = tc.Send("您的图片已经上传到图床\n" + upimage)
 	if err != nil {
-		tm.Log.Println("发送信息失败:", err)
+		global.LogZap.Errorln("发送信息失败:", err)
 		return err
 	}
-	tm.Log.Println("来新图啦:", upimage)
+	global.LogZap.Infoln("来新图啦:", upimage)
 
 	// 响应信息给用户
 	return nil
@@ -223,7 +223,7 @@ func (tm *Telegramini) setRouters() {
 		menu.Row(btnSettings),
 	)
 
-	tm.Bot.Use(middleware.Logger(tm.Log))
+	//tm.Bot.Use(middleware.Logger(global.Log))
 	tm.Bot.Use(middleware.AutoRespond())
 	tm.Bot.Handle("/gethook", tm.commandGethook, middleware.IgnoreVia())
 	tm.Bot.Handle("/help", func(c tele.Context) error {
@@ -246,7 +246,7 @@ func NewTeleBot(t *Telegramini) (*Telegramini, error) {
 
 	b, err := tele.NewBot(pref)
 	if err != nil {
-		t.Log.Fatal(err)
+		global.LogZap.Fatal(err)
 		return nil, err
 	}
 
