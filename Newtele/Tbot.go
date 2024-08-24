@@ -2,17 +2,19 @@ package Tbot
 
 import (
 	"fmt"
+	"io"
+	"log"
+	"time"
+
 	"github.com/dustin/go-humanize"
 	tele "gopkg.in/telebot.v3"
 	"gopkg.in/telebot.v3/middleware"
-	"io"
-	"log"
 	"telegram-notice/global"
 	uhash "telegram-notice/hash"
 	"telegram-notice/utils"
-	"time"
 )
 
+// Telegramini 结构体用于存储 Telegram 相关配置和 Bot 实例
 type Telegramini struct {
 	Apitoken   string
 	TgimageUrl string
@@ -21,196 +23,173 @@ type Telegramini struct {
 	Bot        *tele.Bot
 }
 
+// commandGethook 处理 /gethook 命令，返回用户的 MD5 ID
 func (tm *Telegramini) commandGethook(tc tele.Context) error {
 	md5id := uhash.IntToMd5(tc.Message().Chat.ID)
-	var txt = "您的用户ID为\n```" + md5id + "```\n请复制到网页中使用" +
-		"\nhttps://" + tm.Notifyurl + "/webhook/" + md5id + "?text=hello" +
-		"\n请勿泄露您的md5给他人.否则可能导致他人发送消息到您的账号" +
-		"未经md5加密之前的id为\n```" + fmt.Sprintf("%d", tc.Message().Chat.ID) + "```"
+	txt := fmt.Sprintf("您的用户ID为\n```%s```\n请复制到网页中使用\nhttps://%s/webhook/%s?text=hello\n请勿泄露您的md5给他人.否则可能导致他人发送消息到您的账号\n未经md5加密之前的id为\n```%d```",
+		md5id, tm.Notifyurl, md5id, tc.Message().Chat.ID)
 	log.Println("来新用户啦:", tc.Message().Chat.ID, "\n", "md5:", md5id)
+
 	options := &tele.SendOptions{
 		DisableWebPagePreview: true,
 		ParseMode:             tele.ModeMarkdown,
 	}
-	err := tc.Send(txt, options)
-	if err != nil {
-
-		global.LogZap.Errorf("消息发送失败: %w", err)
+	if err := tc.Send(txt, options); err != nil {
+		global.LogZap.Errorf("消息发送失败: %v", err)
 		return err
-
 	}
+
 	tm.Hash.Set(tc.Message().Chat.ID, md5id)
-	err = tm.Hash.SaveToFile("config/hash.json")
-	if err != nil {
-		errs := fmt.Errorf("hash保存失败: %w", err)
-		global.LogZap.Error(errs)
-		return errs
+	if err := tm.Hash.SaveToFile("config/hash.json"); err != nil {
+		global.LogZap.Errorf("hash保存失败: %v", err)
+		return err
 	}
 	return nil
 }
+
+// procPhoto 处理接收到的照片
 func (tm *Telegramini) procPhoto(tc tele.Context) error {
 	if tc.Message().Photo.FileSize > 5242880 {
-		_ = tc.Send("文件过大,请上传小于5M的图片或视频")
-		return nil
+		return tc.Send("文件过大,请上传小于5M的图片或视频")
 	}
-	_ = tc.Send("正在下载图片,文件大小为:" + humanize.IBytes(uint64(tc.Message().Photo.FileSize)))
+
+	tc.Send("正在下载图片,文件大小为:" + humanize.IBytes(uint64(tc.Message().Photo.FileSize)))
 	reader, err := tm.Bot.File(&tc.Message().Photo.File)
-	defer func(reader io.ReadCloser) {
-		err := reader.Close()
-		if err != nil {
-			global.LogZap.Error("Error when closing the body: %v", err)
-		}
-	}(reader)
 	if err != nil {
-		global.LogZap.Error("Failed to download:", err)
+		global.LogZap.Errorf("下载图片失败: %v", err)
 		return err
 	}
+	defer reader.Close()
 
 	data, err := io.ReadAll(reader)
-
 	if err != nil {
-		global.LogZap.Error("发送信息失败:", err)
+		global.LogZap.Errorf("读取图片失败: %v", err)
 		return err
 	}
+
 	upimage, err := utils.Upimage(tm.TgimageUrl, data)
 	if err != nil {
-		global.LogZap.Error("上传图片失败:", err)
-		_ = tc.Send("上传图片失败:" + err.Error())
+		global.LogZap.Errorf("上传图片失败: %v", err)
+		tc.Send("上传图片失败:" + err.Error())
 		return err
 	}
-	err = tc.Send("您的图片已经上传到图床\n" + upimage)
-	if err != nil {
-		global.LogZap.Error("发送信息失败:", err)
-		return err
-	}
-	global.LogZap.Infoln("来新图啦:", upimage)
 
-	// 响应信息给用户
+	tc.Send("您的图片已经上传到图床\n" + upimage)
+	global.LogZap.Infof("来新图啦: %s", upimage)
 	return nil
-
 }
+
+// procVideo 处理接收到的视频
 func (tm *Telegramini) procVideo(tc tele.Context) error {
 	if tc.Message().Video.FileSize > 5242880 {
-		_ = tc.Send("文件过大,请上传小于5M的图片或视频")
-		return nil
-
+		return tc.Send("文件过大,请上传小于5M的图片或视频")
 	}
-	_ = tc.Send("正在下载图片或视频,文件大小为:" + humanize.IBytes(uint64(tc.Message().Video.FileSize)))
-	reader, err := tm.Bot.File(&tc.Message().Video.File)
 
+	tc.Send("正在下载图片或视频,文件大小为:" + humanize.IBytes(uint64(tc.Message().Video.FileSize)))
+	reader, err := tm.Bot.File(&tc.Message().Video.File)
 	if err != nil {
-		err := tc.Send("下载图片失败:" + err.Error())
-		global.LogZap.Error("Failed to download:", err)
+		global.LogZap.Errorf("下载视频失败: %v", err)
+		tc.Send("下载图片失败:" + err.Error())
 		return err
 	}
-	defer func(reader io.ReadCloser) {
-		err := reader.Close()
-		if err != nil {
-			global.LogZap.Error("Error when closing the body: %v", err)
-		}
-	}(reader)
+	defer reader.Close()
+
 	data, err := io.ReadAll(reader)
+	if err != nil {
+		global.LogZap.Errorf("读取视频失败: %v", err)
+		return err
+	}
 
 	upimage, err := utils.Upimage(tm.TgimageUrl, data)
 	if err != nil {
-		global.LogZap.Error("上传图片失败:", err)
-		_ = tc.Send("上传图片失败:" + err.Error())
+		global.LogZap.Errorf("上传视频失败: %v", err)
+		tc.Send("上传图片失败:" + err.Error())
 		return err
 	}
-	err = tc.Send("您的图片已经上传到图床\n" + upimage)
-	if err != nil {
-		global.LogZap.Error("发送信息失败:", err)
-		return err
-	}
-	global.LogZap.Error("来新图啦:", upimage)
 
-	// 响应信息给用户
+	tc.Send("您的图片已经上传到图床\n" + upimage)
+	global.LogZap.Infof("来新图啦: %s", upimage)
 	return nil
-
 }
+
+// procAnimation 处理接收到的动画
 func (tm *Telegramini) procAnimation(tc tele.Context) error {
 	if tc.Message().Animation.FileSize > 5242880 {
-		_ = tc.Send("文件过大,请上传小于5M的图片或视频")
-		return nil
-
+		return tc.Send("文件过大,请上传小于5M的图片或视频")
 	}
-	_ = tc.Send("正在下载图片,文件大小为:" + humanize.IBytes(uint64(tc.Message().Animation.FileSize)))
-	reader, err := tm.Bot.File(&tc.Message().Animation.File)
 
+	tc.Send("正在下载图片,文件大小为:" + humanize.IBytes(uint64(tc.Message().Animation.FileSize)))
+	reader, err := tm.Bot.File(&tc.Message().Animation.File)
 	if err != nil {
-		global.LogZap.Error("Failed to download:", err)
+		global.LogZap.Errorf("下载动画失败: %v", err)
 		return err
 	}
-	defer func(reader io.ReadCloser) {
-		err := reader.Close()
-		if err != nil {
-			global.LogZap.Error("Error when closing the body: %v", err)
-		}
-	}(reader)
+	defer reader.Close()
+
 	data, err := io.ReadAll(reader)
+	if err != nil {
+		global.LogZap.Errorf("读取动画失败: %v", err)
+		return err
+	}
 
 	upimage, err := utils.Upimage(tm.TgimageUrl, data)
 	if err != nil {
-		global.LogZap.Error("上传图片失败:", err)
-		_ = tc.Send("上传图片失败:" + err.Error())
+		global.LogZap.Errorf("上传动画失败: %v", err)
+		tc.Send("上传图片失败:" + err.Error())
 		return err
 	}
-	err = tc.Send("您的图片已经上传到图床\n" + upimage)
-	if err != nil {
-		global.LogZap.Error("发送信息失败:", err)
-		return err
-	}
-	global.LogZap.Infoln("来新图啦:", upimage)
 
-	// 响应信息给用户
+	tc.Send("您的图片已经上传到图床\n" + upimage)
+	global.LogZap.Infof("来新图啦: %s", upimage)
 	return nil
-
 }
+
+// procDocument 处理接收到的文档
 func (tm *Telegramini) procDocument(tc tele.Context) error {
 	if tc.Message().Document.MIME != "image/jpeg" && tc.Message().Document.MIME != "image/png" {
-		_ = tc.Send("不支持的文件类型")
-		return nil
-
+		return tc.Send("不支持的文件类型")
 	} else if tc.Message().Document.FileSize > 5242880 {
-		_ = tc.Send("文件过大,请上传小于5M的图片或视频")
-		return nil
-
+		return tc.Send("文件过大,请上传小于5M的图片或视频")
 	}
-	_ = tc.Send("正在下载图片,文件大小为:" + humanize.IBytes(uint64(tc.Message().Document.FileSize)))
-	reader, err := tm.Bot.File(&tc.Message().Document.File)
 
+	err := tc.Send("正在下载图片,文件大小为:" + humanize.IBytes(uint64(tc.Message().Document.FileSize)))
 	if err != nil {
-		global.LogZap.Errorln("Failed to download:", err)
 		return err
 	}
-	defer func(reader io.ReadCloser) {
-		err := reader.Close()
-		if err != nil {
-			global.LogZap.Errorln("Error when closing the body: %v", err)
-		}
-	}(reader)
+	reader, err := tm.Bot.File(&tc.Message().Document.File)
+	if err != nil {
+		global.LogZap.Errorf("下载文档失败: %v", err)
+		return err
+	}
+	defer reader.Close()
+
 	data, err := io.ReadAll(reader)
+	if err != nil {
+		global.LogZap.Errorf("读取文档失败: %v", err)
+		return err
+	}
 
 	upimage, err := utils.Upimage(tm.TgimageUrl, data)
 	if err != nil {
-		global.LogZap.Errorln("上传图片失败:", err)
-		_ = tc.Send("上传图片失败:" + err.Error())
+		global.LogZap.Errorf("上传文档失败: %v", err)
+		tc.Send("上传图片失败:" + err.Error())
 		return err
 	}
+
 	err = tc.Send("您的图片已经上传到图床\n" + upimage)
 	if err != nil {
-		global.LogZap.Errorln("发送信息失败:", err)
 		return err
 	}
-	global.LogZap.Infoln("来新图啦:", upimage)
-
-	// 响应信息给用户
+	global.LogZap.Infof("来新图啦: %s", upimage)
 	return nil
-
 }
+
+// procOnText 处理接收到的文本消息
 func (tm *Telegramini) procOnText(tc tele.Context) error {
 	return tc.Send("您的消息已经收到\n" + tc.Message().Text)
 }
+
+// setRouters 设置 Telegram Bot 的命令和处理器
 func (tm *Telegramini) setRouters() {
 	menu := &tele.ReplyMarkup{
 		ResizeKeyboard:  true,
@@ -223,7 +202,6 @@ func (tm *Telegramini) setRouters() {
 		menu.Row(btnSettings),
 	)
 
-	//tm.Bot.Use(middleware.Logger(global.Log))
 	tm.Bot.Use(middleware.AutoRespond())
 	tm.Bot.Handle("/gethook", tm.commandGethook, middleware.IgnoreVia())
 	tm.Bot.Handle("/help", func(c tele.Context) error {
@@ -238,6 +216,8 @@ func (tm *Telegramini) setRouters() {
 	tm.Bot.Handle(tele.OnText, tm.procOnText, middleware.IgnoreVia())
 	tm.Bot.Handle(tele.OnAnimation, tm.procAnimation, middleware.IgnoreVia())
 }
+
+// NewTeleBot 创建并初始化一个新的 Telegram Bot
 func NewTeleBot(t *Telegramini) (*Telegramini, error) {
 	pref := tele.Settings{
 		Token:  t.Apitoken,

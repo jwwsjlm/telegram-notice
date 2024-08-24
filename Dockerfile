@@ -1,5 +1,5 @@
 # 使用Go官方镜像作为构建环境，指定具体版本号
-FROM golang:1.22.4-alpine as builder
+FROM golang:1.22.6-alpine as builder
 
 # 创建工作目录
 WORKDIR /app
@@ -22,10 +22,10 @@ COPY . .
 # 编译二进制文件，禁用CGO提高跨平台兼容性
 # 使用-gcflags和-ldflags优化二进制文件大小和安全性
 # 使用upx压缩main二进制文件
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
-    && go build -gcflags "all=-N -l" -trimpath \
-    -ldflags "-s -w -buildid=" -o main \
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64  \
+    && go build -o main -trimpath -gcflags="all=-N -l" -ldflags="-s -w -buildid=" .  \
     && upx -6 main
+
 
 # 创建一个小型的最终镜像
 FROM alpine
