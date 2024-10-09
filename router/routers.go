@@ -83,6 +83,7 @@ func GetWebHook(hashMap *uhash.Hashtable, t *Tbot.Telegramini) gin.HandlerFunc {
 		// 通过 ID 判断 hashMap 中是否存在该用户
 		idInt, err := hashMap.Get(id)
 		if err != nil {
+
 			fmt.Println(err)
 			c.JSON(404, gin.H{"message": err.Error()})
 			return

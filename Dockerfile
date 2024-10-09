@@ -1,5 +1,5 @@
 # 使用Go官方镜像作为构建环境，指定具体版本号
-FROM golang:1.22.6-alpine as builder
+FROM golang:1.23-alpine3.20 as builder
 
 # 创建工作目录
 WORKDIR /app
